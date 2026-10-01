@@ -16,8 +16,20 @@ jobs:
         with:
           gradle-version: 9.2.0
       - name: Build
-        run: gradle build
+        run: |
+          FILE=$(find . -name settings.gradle -not -path "./.git/*" | head -n 1)
+          if [ -z "$FILE" ]; then
+            echo "settings.gradle was not found. Files in the repository:"
+            find . -not -path "./.git/*" | head -n 50
+            exit 1
+          fi
+          DIR=$(dirname "$FILE")
+          echo "Building in $DIR"
+          cd "$DIR"
+          gradle build
+          mkdir -p "$GITHUB_WORKSPACE/out"
+          cp build/libs/*.jar "$GITHUB_WORKSPACE/out/"
       - uses: actions/upload-artifact@v4
         with:
           name: NangClient-jar
-          path: build/libs/*.jar
+          path: out/*.jar
